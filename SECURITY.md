@@ -14,8 +14,8 @@ Before deploying or uploading this project to GitHub:
 ## 2. Default admin account
 
 - On first run, if no users exist, a default admin is created:
-  - Email: `adminFPT@gmail.com`
-  - Password: `adminFPT2026`
+  - Email: `admin@example.com`
+  - Password: `change_on_first_login`
 - **Change this password** in production or when sharing the system.
 
 ## 3. Database and session data
