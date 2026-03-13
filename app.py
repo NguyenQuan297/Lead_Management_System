@@ -36,8 +36,8 @@ if _LOGO_PATH.exists():
             else:
                 new_data.append(item)
         img.putdata(new_data)
-        # Full size for login page (max width 280)
-        w_full = min(w, 280)
+        # Login page: smaller logo for balanced layout (max width 180)
+        w_full = min(w, 180)
         h_full = int(h * w_full / w)
         img_full = img.resize((w_full, h_full), resample)
         buf = io.BytesIO()
@@ -94,8 +94,14 @@ st.markdown("""
     /* Sidebar logo: small, at top corner */
     [data-testid="stSidebar"] .stImage:first-child { margin-top: 0; margin-bottom: 0.25rem; }
     [data-testid="stSidebar"] .stImage:first-child img { max-width: 140px; }
-    /* Main: consistent spacing */
-    .main .block-container { padding-top: 1.5rem; padding-bottom: 2rem; max-width: 1100px; }
+    /* Main: consistent spacing, centered */
+    .main .block-container { padding-top: 1.5rem; padding-bottom: 2rem; max-width: 1100px; margin-left: auto; margin-right: auto; }
+    /* Login page: center columns content (logo, line, title) */
+    .main .block-container [data-testid="column"] { text-align: center; }
+    .main .block-container [data-testid="column"] .stImage { display: flex; justify-content: center; }
+    .main .block-container [data-testid="column"] .stImage img { display: block; margin-left: auto; margin-right: auto; }
+    .main .block-container [data-testid="column"] h1 { text-align: center; }
+    .main .block-container [data-testid="column"] hr { margin-left: auto; margin-right: auto; }
     h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
     h2 { font-size: 1.25rem; margin-top: 1rem; margin-bottom: 0.5rem; }
 </style>
@@ -284,14 +290,20 @@ def logout():
 
 
 def login_page():
-    if _LOGO_BYTES:
-        st.image(_LOGO_BYTES, use_column_width=True)
-    st.title("Hệ thống Quản lý Lead")
-    st.markdown("---")
+    # Centered block: logo, line, title (single HTML block so alignment is reliable)
+    logo_b64 = base64.b64encode(_LOGO_BYTES).decode("utf-8") if _LOGO_BYTES else None
+    st.markdown(
+        "<div style='margin-top: 1.5rem; text-align: center;'>"
+        + ("<img src='data:image/png;base64," + logo_b64 + "' width='180' style='display: block; margin: 0 auto;'/>" if logo_b64 else "")
+        + "<hr style='margin: 0.75rem auto; max-width: 400px;'/>"
+        + "<h1 style='font-size: 1.75rem; margin: 0.5rem 0;'>Hệ thống Quản lý Lead</h1>"
+        + "</div>",
+        unsafe_allow_html=True,
+    )
     tab_login, tab_register = st.tabs(["Đăng nhập", "Đăng ký"])
     with tab_login:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
+        c1, c2, c3 = st.columns([1, 2, 1])
+        with c2:
             with st.form("login_form"):
                 email = st.text_input("Email", placeholder="email@vd.com")
                 password = st.text_input("Mật khẩu", type="password", placeholder="••••••••")
@@ -319,8 +331,8 @@ def login_page():
                         else:
                             st.error("Email hoặc mật khẩu không đúng.")
     with tab_register:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
+        c1, c2, c3 = st.columns([1, 2, 1])
+        with c2:
             with st.form("register_form"):
                 name = st.text_input("Họ tên", placeholder="Họ và tên đầy đủ")
                 email_r = st.text_input("Email", placeholder="email@vd.com", key="reg_email")
