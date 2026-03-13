@@ -68,12 +68,18 @@ def register(name: str, email: str, password: str, role: str, registration_code:
 
 
 def ensure_admin_user():
-    """Create default admin if no users exist (email: adminFPT@gmail.com, password: adminFPT2026)."""
+    """Create default admin if no users exist (credentials from environment variables)."""
 
-    if db.get_user_by_email("adminFPT@gmail.com") is None:
+    admin_email = os.environ.get("DEFAULT_ADMIN_EMAIL", "").strip()
+    admin_password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "").strip()
+
+    if not admin_email or not admin_password:
+        return
+
+    if db.get_user_by_email(admin_email) is None:
         db.create_user(
-            email="adminFPT@gmail.com",
-            password_hash=hash_password("adminFPT2026"),
+            email=admin_email,
+            password_hash=hash_password(admin_password),
             name="Administrator",
             role="admin",
         )
