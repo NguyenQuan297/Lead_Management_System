@@ -1,0 +1,22 @@
+# Environment and secrets (never commit)
+.env
+.env.local
+.env.*.local
+
+# Database and session data (do not commit)
+lead_management.db
+.shared_leads.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
