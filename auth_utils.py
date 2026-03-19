@@ -6,15 +6,30 @@ Registration codes are loaded from environment variables (not stored in source c
 import os
 import bcrypt
 import database as db
+import streamlit as st
 from typing import Optional, Dict, Tuple
+
+
+def _get_config_value(key: str, default: str = "") -> str:
+    """
+    Read config values from Streamlit Secrets first, then fall back to env vars.
+    Works on Streamlit Cloud where secrets may not populate os.environ.
+    """
+    try:
+        if hasattr(st, "secrets") and key in st.secrets:
+            v = st.secrets.get(key)
+            return (v or "").strip()
+    except Exception:
+        pass
+    return (os.environ.get(key) or default).strip()
 
 
 def _get_registration_code(role: str) -> str:
     """Get registration code for role from environment. Codes must not be in source code."""
     if role == "admin":
-        return (os.environ.get("ADMIN_REGISTRATION_CODE") or "").strip()
+        return _get_config_value("ADMIN_REGISTRATION_CODE")
     if role == "sales":
-        return (os.environ.get("SALES_REGISTRATION_CODE") or "").strip()
+        return _get_config_value("SALES_REGISTRATION_CODE")
     return ""
 
 
@@ -52,7 +67,11 @@ def register(name: str, email: str, password: str, role: str, registration_code:
         return False, "Vai trò không hợp lệ."
 
     expected_code = _get_registration_code(role)
-    if not expected_code or registration_code.strip() != expected_code:
+    registration_code = registration_code.strip()
+    if not expected_code:
+        # Expected code is missing on the server (e.g. Streamlit Secrets not configured).
+        return False, "Đăng ký thất bại: hệ thống chưa cấu hình mã đăng ký cho vai trò này trên server."
+    if registration_code != expected_code:
         return False, "Đăng ký thất bại: mã đăng ký không đúng."
 
     if db.get_user_by_email(email.strip()):
@@ -70,8 +89,8 @@ def register(name: str, email: str, password: str, role: str, registration_code:
 def ensure_admin_user():
     """Create default admin if no users exist (credentials from environment variables)."""
 
-    admin_email = os.environ.get("DEFAULT_ADMIN_EMAIL", "").strip()
-    admin_password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "").strip()
+    admin_email = _get_config_value("DEFAULT_ADMIN_EMAIL")
+    admin_password = _get_config_value("DEFAULT_ADMIN_PASSWORD")
 
     if not admin_email or not admin_password:
         return

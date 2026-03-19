@@ -119,11 +119,22 @@ def delete_session(session_id: str) -> None:
 def create_user(email: str, password_hash: str, name: str, role: str) -> int:
     with get_connection() as conn:
         cur = conn.cursor()
+        # Use UPSERT to avoid UNIQUE constraint errors if ensure_admin_user()
+        # runs multiple times (Streamlit reruns / multi-worker start).
         cur.execute(
-            "INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)",
-            (email, password_hash, name, role)
+            """
+            INSERT INTO users (email, password_hash, name, role)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(email) DO UPDATE SET
+                password_hash = excluded.password_hash,
+                name = excluded.name,
+                role = excluded.role
+            """,
+            (email, password_hash, name, role),
         )
-        return cur.lastrowid
+        cur.execute("SELECT id FROM users WHERE email = ?", (email,))
+        row = cur.fetchone()
+        return int(row["id"]) if row else 0
 
 
 def get_user_by_email(email: str) -> Optional[Dict]:

@@ -29,7 +29,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Default admin: **admin@example.com** / **admin123**. Create sales users via **User Management** (Admin only).
+Copy `.env.example` to `.env` and set `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_PASSWORD`, and registration codes. On first run (empty DB), one admin is created from those env vars. Create sales users via **Register** tab (with the right registration code).
 
 ## XLSX Format
 
@@ -41,6 +41,23 @@ Default admin: **admin@example.com** / **admin123**. Create sales users via **Us
 - `name`: text  
 - `phone`: text  
 - `created_date`: datetime (e.g. `YYYY-MM-DD HH:MM` or Excel datetime)
+
+## Deploy (Streamlit Cloud, Railway, etc.)
+
+**Quan trọng:** Trên server **không có file `.env`** (file này không được đẩy lên Git). Bạn phải cấu hình **Environment variables / Secrets** trên nền tảng deploy:
+
+| Biến | Bắt buộc | Ghi chú |
+|------|----------|--------|
+| `DEFAULT_ADMIN_EMAIL` | Có | Email đăng nhập admin (tạo khi DB trống) |
+| `DEFAULT_ADMIN_PASSWORD` | Có | Mật khẩu admin |
+| `ADMIN_REGISTRATION_CODE` | Có | Mã để đăng ký tài khoản Admin |
+| `SALES_REGISTRATION_CODE` | Có | Mã để đăng ký tài khoản Sales |
+| `COOKIES_PASSWORD` | Tùy chọn | Mã hóa cookie (đặt chuỗi bí mật) |
+
+- **Streamlit Cloud:** Settings → Secrets (hoặc Secrets trong repo) → thêm từng dòng `TÊN_BIẾN=giá_trị`.
+- Sau khi thêm xong, **redeploy** (hoặc restart app) để app đọc biến môi trường và tạo admin lần đầu.
+
+Nếu không set các biến trên, app deploy sẽ **không tạo admin** → không đăng nhập được.
 
 ## Pages
 
