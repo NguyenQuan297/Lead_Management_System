@@ -446,3 +446,75 @@ def render_dashboard():
     c4.metric("Lead đã active", active)
     st.markdown("---")
     st.info("Số liệu từ bộ dữ liệu đã tải lên. Lead chưa active sau 16h được tô đỏ trong danh sách.")
+
+
+def render_lead_management():
+    # NOTE: app.py hiện tại có thể đã bị cắt đoạn trong repository.
+    # Để tránh màn hình đen khi deploy, tạm hiển thị thông tin và hướng dẫn.
+    st.title("Quản lý Lead")
+    if st.session_state.user is None:
+        st.info("Vui lòng đăng nhập trước.")
+        return
+
+    if not _shared_leads:
+        st.warning("Chưa có lead. Admin hãy tải file Excel lên để bắt đầu.")
+        return
+
+    st.info(f"Đã tải {len(_shared_leads)} lead trong phiên hiện tại.")
+    st.caption("Tính năng upload/assign/notes có thể chưa đầy đủ nếu app.py bị cắt trên repo.")
+
+
+def render_user_management():
+    st.title("Quản lý người dùng")
+    user = st.session_state.user
+    if not user or user.get("role") != "admin":
+        st.error("Chỉ Admin được xem trang này.")
+        return
+
+    sales = db.list_users(role="sales")
+    st.subheader("Tư vấn viên (Sales)")
+    if not sales:
+        st.info("Chưa có tư vấn viên.")
+        return
+    for u in sales:
+        st.write(f"- {u.get('name')} ({u.get('email')})")
+
+
+def render_reports():
+    st.title("Báo cáo")
+    st.info("Tạm thời chưa có báo cáo. Hãy khôi phục app.py đầy đủ nếu cần tính năng export.")
+
+
+def main():
+    if st.session_state.user is None:
+        login_page()
+        return
+
+    user = st.session_state.user
+
+    st.sidebar.title("Quản lý Lead")
+    if user:
+        st.sidebar.markdown(f"**{user.get('name')}** ({user.get('role')})")
+
+    if st.sidebar.button("Đăng xuất", key="sidebar_logout"):
+        logout()
+        st.rerun()
+
+    pages = ["Dashboard", "Lead Management"]
+    if user.get("role") == "admin":
+        pages = ["Dashboard", "Lead Management", "User Management", "Reports"]
+
+    page = st.sidebar.radio("Điều hướng", pages, index=0, horizontal=False)
+
+    if page == "Dashboard":
+        render_dashboard()
+    elif page == "Lead Management":
+        render_lead_management()
+    elif page == "User Management":
+        render_user_management()
+    else:
+        render_reports()
+
+
+if __name__ == "__main__":
+    main()

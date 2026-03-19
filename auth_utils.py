@@ -4,6 +4,8 @@ Registration codes are loaded from environment variables (not stored in source c
 """
 
 import os
+from pathlib import Path
+
 import bcrypt
 import database as db
 import streamlit as st
@@ -15,13 +17,23 @@ def _get_config_value(key: str, default: str = "") -> str:
     Read config values from Streamlit Secrets first, then fall back to env vars.
     Works on Streamlit Cloud where secrets may not populate os.environ.
     """
+    # 1) Prefer environment variables (works on some deploy setups)
+    v = os.environ.get(key)
+    if v is not None:
+        return (v or "").strip()
+
+    # 2) Fallback to Streamlit Secrets only if a secrets.toml actually exists.
+    # On local dev, accessing st.secrets without secrets.toml can show:
+    # "Secrets file not found..." and break the page rendering.
     try:
-        if hasattr(st, "secrets") and key in st.secrets:
-            v = st.secrets.get(key)
-            return (v or "").strip()
+        secrets_toml = Path(__file__).resolve().parent / ".streamlit" / "secrets.toml"
+        if secrets_toml.exists() and hasattr(st, "secrets") and key in st.secrets:
+            v2 = st.secrets.get(key)
+            return (v2 or "").strip()
     except Exception:
         pass
-    return (os.environ.get(key) or default).strip()
+
+    return (default or "").strip()
 
 
 def _get_registration_code(role: str) -> str:
